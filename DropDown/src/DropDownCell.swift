@@ -14,9 +14,17 @@ open class DropDownCell: UITableViewCell {
 	@IBOutlet open weak var optionLabel: UILabel!
 	
 	var selectedBackgroundColor: UIColor?
-    var highlightTextColor: UIColor?
-    var normalTextColor: UIColor?
-
+	var highlightTextColor: UIColor?
+	var normalTextColor: UIColor?
+	
+	required public override init(style: CellStyle, reuseIdentifier: String?) {
+		super.init(style: style, reuseIdentifier: reuseIdentifier)
+	}
+	
+	public required init?(coder: NSCoder) {
+		super.init(coder: coder)
+	}
+	
 }
 
 //MARK: - UI
@@ -48,14 +56,14 @@ extension DropDownCell {
 	override open func setSelected(_ selected: Bool, animated: Bool) {
 		let executeSelection: () -> Void = { [weak self] in
 			guard let `self` = self else { return }
-
+			
 			if let selectedBackgroundColor = self.selectedBackgroundColor {
 				if selected {
 					self.backgroundColor = selectedBackgroundColor
-                    self.optionLabel.textColor = self.highlightTextColor
+					self.optionLabel.textColor = self.highlightTextColor
 				} else {
 					self.backgroundColor = .clear
-                    self.optionLabel.textColor = self.normalTextColor
+					self.optionLabel.textColor = self.normalTextColor
 				}
 			}
 		}
@@ -67,7 +75,7 @@ extension DropDownCell {
 		} else {
 			executeSelection()
 		}
-
+		
 		accessibilityTraits = selected ? .selected : .none
 	}
 	

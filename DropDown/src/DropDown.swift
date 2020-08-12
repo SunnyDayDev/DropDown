@@ -72,6 +72,15 @@ public final class DropDown: UIView {
 		case bottom
 
 	}
+	
+	/// The cell source type.
+	public enum Cell {
+		/// The drop down will instantiate cells by type
+		case type(DropDownCell.Type)
+		
+		/// The drop down will instantiate cells from nib
+		case nib(UINib)
+	}
 
 	//MARK: - Properties
 
@@ -349,15 +358,26 @@ public final class DropDown: UIView {
 	@objc public dynamic var textFont = DPDConstant.UI.TextFont {
 		didSet { reloadAllComponents() }
 	}
-    
-    /**
+	
+	
+	/**
      The NIB to use for DropDownCells
      
      Changing the cell nib automatically reloads the drop down.
      */
-	public var cellNib = UINib(nibName: "DropDownCell", bundle: Bundle(for: DropDownCell.self)) {
+	public var cellNib: UINib? {
+		get {
+			if case .nib(let nib) = cell { return nib }
+			else { return nil }
+		}
+		set {
+			cell = .nib(newValue ?? UINib.defaultDropDownCell)
+		}
+	}
+	
+	public var cell: Cell = .nib(.defaultDropDownCell) {
 		didSet {
-			tableView.register(cellNib, forCellReuseIdentifier: DPDConstant.ReusableIdentifier.DropDownCell)
+			tableView.register(cell)
 			templateCell = nil
 			reloadAllComponents()
 		}
@@ -504,7 +524,7 @@ public final class DropDown: UIView {
 private extension DropDown {
 
 	func setup() {
-		tableView.register(cellNib, forCellReuseIdentifier: DPDConstant.ReusableIdentifier.DropDownCell)
+		tableView.register(cell)
 
 		DispatchQueue.main.async {
 			//HACK: If not done in dispatch_async on main queue `setupUI` will have no effect
@@ -752,7 +772,12 @@ extension DropDown {
 	
 	fileprivate func fittingWidth() -> CGFloat {
 		if templateCell == nil {
-			templateCell = (cellNib.instantiate(withOwner: nil, options: nil)[0] as! DropDownCell)
+			switch cell {
+			case .nib(let nib):
+				templateCell = (nib.instantiate(withOwner: nil, options: nil)[0] as! DropDownCell)
+			case .type(let type):
+				templateCell = type.init(style: .default, reuseIdentifier: DPDConstant.ReusableIdentifier.DropDownCell)
+			}
 		}
 		
 		var maxWidth: CGFloat = 0
@@ -1193,4 +1218,26 @@ private extension DispatchQueue {
 			main.async(execute: closure)
 		}
 	}
+}
+
+private extension UITableView {
+	
+	func register(_ cell: DropDown.Cell) {
+		switch cell {
+		case .type(let type):
+			register(type, forCellReuseIdentifier: DPDConstant.ReusableIdentifier.DropDownCell)
+		
+		case .nib(let nib):
+			register(nib, forCellReuseIdentifier: DPDConstant.ReusableIdentifier.DropDownCell)
+		}
+	}
+	
+}
+
+private extension UINib {
+	
+	static var defaultDropDownCell: UINib {
+		UINib(nibName: "DropDownCell", bundle: Bundle(for: DropDownCell.self))
+	}
+	
 }
